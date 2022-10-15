@@ -29,18 +29,20 @@ default_args = {
 def trab2_titanic():
 
     @task
-    def ingestao():
+    def dag_1():
         NOME_DO_ARQUIVO = "/tmp/titanic.csv"
         df = pd.read_csv(URL, sep=';')
         df.to_csv(NOME_DO_ARQUIVO, index=False, sep=";")
-        #pandas.core.frame.DataFrame type of df
-        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAB")
+        #return NOME_TABELA
         print("Quantidade de passageiros por sexo e classe = ",df.groupby(['Sex','Pclass'])['PassengerId'].count())
+
         print("Preço médio da tarifa pago por sexo e classe = ",df.groupby(['Sex','Pclass'])['Fare'].mean())
+
         column_names = ['SibSp','Parch']
         df['sum_family']= df[column_names].sum(axis=1)
         print("Quantidade total de SibSp + Parch por sexo e classe = ",df.groupby(['Sex','Pclass'])['sum_family'].sum())
         #print (df.columns) #Index(['PassengerId', 'Survived', 'Pclass', 'Name', 'Sex', 'Age', 'SibSp','Parch', 'Ticket', 'Fare', 'Cabin', 'Embarked']
+        
         df2 = pd.DataFrame(columns = column_names)
         #print(df2)
         df2['qtd_pass'] = df.groupby(['Sex','Pclass'])['PassengerId'].count()
@@ -52,13 +54,17 @@ def trab2_titanic():
         df2.to_csv(NOME_DO_ARQUIVO_INDICADORES, index=False, sep=";") 
         print('tabela de indicadores:\n',df2)
 
-
+    triggerdag = TriggerDagRunOperator(
+        task_id="trigger_DAG2",
+        trigger_dag_id="trabalho-titanic-gabriel-2"
+    )
+    
     fim = DummyOperator(task_id="fim")
 
-    ing = ingestao()
+    dag1 = dag_1()
     #indicador = ind_passageiros(ing)
 
-    ing >> fim
+    dag1 >> fim >> triggerdag
 
 
 execucao = trab2_titanic()
